@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.teralone.auth.totp.TotpGenerator
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(accounts: Map<String, String>) {
     Scaffold(
