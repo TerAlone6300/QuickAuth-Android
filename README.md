@@ -1,24 +1,29 @@
-# QuickAuth-Android
+# QuickAuth-Android (Kotlin)
 
-This repository provides an Android-optimized client implementation for the [QuickAuth](https://github.com/TerAlone6300/QuickAuth) system, designed to work seamlessly within Android environments (e.g., Termux).
+QuickAuth-Android is a native Android application built with Kotlin and Jetpack Compose, designed to act as a client for the [QuickAuth](https://github.com/TerAlone6300/QuickAuth) system.
 
 ## Overview
 
-QuickAuth-Android enables secure management and generation of Time-based One-Time Passwords (TOTP) directly on your Android device. It acts as a client for the core QuickAuth server, ensuring your authentication tokens are synchronized securely across devices while maintaining local control.
+This application enables secure management and generation of Time-based One-Time Passwords (TOTP) directly on your Android device. It synchronizes your account list and authentication secrets with a central QuickAuth server while maintaining local control.
 
 ## Key Features
 
-- **Secure TOTP Generation:** Native implementation for generating TOTP codes, supporting standard algorithms without external dependencies.
-- **Synchronized Accounts:** Securely syncs your account list and authentication secrets with a central QuickAuth server.
-- **Session Management:** Handles secure session tokens, automatic token refreshing, and server-side session revocation.
-- **Android Optimized:** Built with awareness of Android/Termux environments, utilizing appropriate storage and input handling for mobile terminal usage.
-- **Profile Support:** Manage multiple authentication profiles easily.
+- **Secure TOTP Generation:** Native Kotlin implementation for generating TOTP codes.
+- **Synchronized Accounts:** Securely syncs your accounts with the QuickAuth server using Retrofit.
+- **Modern UI:** Built with **Jetpack Compose** and **Material 3**, featuring support for both Light and Dark themes.
+- **Secure Storage:** Uses Android **EncryptedSharedPreferences** for local data encryption.
+- **CI/CD Integration:** Automatically builds and signs release APKs using GitHub Actions.
 
-## Functionality
+## Requirements
 
-The client handles the complete lifecycle of authentication:
-1.  **Secure Storage:** Stores account data locally, with platform-specific encryption (where applicable).
-2.  **Sync:** Connects to the QuickAuth server to fetch or update your account list.
-3.  **Generation:** Displays live, updating TOTP codes based on the configured secrets.
-4.  **TUI/CLI:** Provides an interactive interface for managing keys, sessions, and profiles directly from your terminal.
+- Android SDK 34 (API 34)
+- Java 17 (Eclipse Temurin)
 
+## Security Configuration
+
+To enable automated release APK signing via GitHub Actions, configure the following repository secrets:
+
+- `SIGNING_KEY_BASE64`: The Base64-encoded `release.jks` keystore.
+- `STORE_PASSWORD`: Keystore password.
+- `KEY_ALIAS`: Keystore alias (default: `key0`).
+- `KEY_PASSWORD`: Key password.
