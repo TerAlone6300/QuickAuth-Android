@@ -4,6 +4,7 @@ import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.math.pow
+import java.nio.ByteBuffer
 
 object TotpGenerator {
     private const val TIME_STEP = 30
@@ -38,4 +39,3 @@ object TotpGenerator {
         return Base64.getDecoder().decode(base32) // Simplification for demo
     }
 }
-import java.nio.ByteBuffer
