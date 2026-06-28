@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.teralone.auth'
+    namespace 'asia.axientstudio.quickauth.android'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.teralone.auth"
+        applicationId "asia.axientstudio.quickauth.android"
         minSdk 24
         targetSdk 34
         versionCode 1
