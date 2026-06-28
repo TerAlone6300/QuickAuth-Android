@@ -18,12 +18,3 @@ This application enables secure management and generation of Time-based One-Time
 
 - Android SDK 34 (API 34)
 - Java 17 (Eclipse Temurin)
-
-## Security Configuration
-
-To enable automated release APK signing via GitHub Actions, configure the following repository secrets:
-
-- `SIGNING_KEY_BASE64`: The Base64-encoded `release.jks` keystore.
-- `STORE_PASSWORD`: Keystore password.
-- `KEY_ALIAS`: Keystore alias (default: `key0`).
-- `KEY_PASSWORD`: Key password.
