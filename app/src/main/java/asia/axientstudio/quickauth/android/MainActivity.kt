@@ -47,19 +47,18 @@ class MainActivity : ComponentActivity() {
 
             QuickAuthTheme(darkTheme = darkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AnimatedContent(targetState = showSettings, label = "SettingsTransition") { targetShowSettings ->
-                        if (targetShowSettings) {
-                            SettingsScreen(
-                                onBack = { showSettings = false },
-                                themeMode = themeMode,
-                                onThemeModeChange = { mode ->
-                                    themeMode = mode
-                                    appPrefs.edit().putString(KEY_THEME_MODE, mode).apply()
-                                },
-                                onPerformSync = { scope.launch { syncManager.performSync() } }
-                            )
-                        } else {
-                            // TODO: Implement proper navigation
+                    if (showSettings) {
+                        SettingsScreen(
+                            onBack = { showSettings = false },
+                            themeMode = themeMode,
+                            onThemeModeChange = { mode ->
+                                themeMode = mode
+                                appPrefs.edit().putString(KEY_THEME_MODE, mode).apply()
+                            },
+                            onPerformSync = { scope.launch { syncManager.performSync() } }
+                        )
+                    } else {
+                        // TODO: Implement proper navigation
                         val showImport = remember { mutableStateOf(false) }
                         
                         if (showImport.value) {
