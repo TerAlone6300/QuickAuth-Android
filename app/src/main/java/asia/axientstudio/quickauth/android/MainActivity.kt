@@ -25,13 +25,6 @@ class MainActivity : ComponentActivity() {
 
         val secureStorage = SecureStorage(this)
 
-        // Populate with a demo account if completely empty to show something on first launch
-        val accounts = secureStorage.getAllAccounts()
-        if (accounts.isEmpty()) {
-            // "JBSWY3DPEHPK3PXP" is "Hello!" in base32 (standard test secret)
-            secureStorage.saveAccount("Demo Account", "JBSWY3DPEHPK3PXP")
-        }
-
         // Theme preference is not sensitive, so a plain (unencrypted) prefs file is fine here.
         val appPrefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -59,14 +52,26 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     } else {
-                        // Convert map of <String, *> to Map<String, String>
-                        val accountsMap = secureStorage.getAllAccounts().mapValues {
-                            it.value?.toString() ?: ""
+                        // TODO: Implement proper navigation
+                        val showImport = remember { mutableStateOf(false) }
+                        
+                        if (showImport.value) {
+                            ImportScreen(
+                                onBack = { showImport.value = false },
+                                onImportGallery = { /* TODO */ },
+                                onScanCamera = { /* TODO */ }
+                            )
+                        } else {
+                            // Convert map of <String, *> to Map<String, String>
+                            val accountsMap = secureStorage.getAllAccounts().mapValues {
+                                it.value?.toString() ?: ""
+                            }
+                            MainScreen(
+                                accounts = accountsMap,
+                                onOpenSettings = { showSettings = true },
+                                onNavigateToImport = { showImport.value = true }
+                            )
                         }
-                        MainScreen(
-                            accounts = accountsMap,
-                            onOpenSettings = { showSettings = true }
-                        )
                     }
                 }
             }

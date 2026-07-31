@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QuickAuth</string>
+    <string name="settings">Cài đặt</string>
+    <string name="back">Quay lại</string>
+    <string name="theme">Giao diện</string>
+    <string name="system">Hệ thống</string>
+    <string name="light">Sáng</string>
+    <string name="dark">Tối</string>
+    <string name="security">Bảo mật</string>
+    <string name="sync">Đồng bộ</string>
+    <string name="no_accounts">Chưa có tài khoản</string>
+</resources>
