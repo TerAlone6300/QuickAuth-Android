@@ -59,9 +59,7 @@ class MainActivity : ComponentActivity() {
                                 onPerformSync = { scope.launch { syncManager.performSync() } }
                             )
                         } else {
-                            // ...
-
-                        // TODO: Implement proper navigation
+                            // TODO: Implement proper navigation
                         val showImport = remember { mutableStateOf(false) }
                         
                         if (showImport.value) {
