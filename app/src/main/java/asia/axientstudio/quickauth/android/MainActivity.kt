@@ -3,12 +3,10 @@ package asia.axientstudio.quickauth.android
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import asia.axientstudio.quickauth.android.data.SecureStorage
@@ -28,16 +26,19 @@ class MainActivity : ComponentActivity() {
 
         val secureStorage = SecureStorage(this)
         val syncManager = SyncManager(this, secureStorage)
-
-        // Theme preference is not sensitive, so a plain (unencrypted) prefs file is fine here.
         val appPrefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         setContent {
             val scope = rememberCoroutineScope()
-            var themeMode by remember {
-                mutableStateOf(appPrefs.getString(KEY_THEME_MODE, "System") ?: "System")
-            }
+            var themeMode by remember { mutableStateOf(appPrefs.getString(KEY_THEME_MODE, "System") ?: "System") }
             var showSettings by remember { mutableStateOf(false) }
+            val showImport = remember { mutableStateOf(false) }
+
+            // Handle Back button
+            BackHandler(enabled = showSettings || showImport.value) {
+                if (showSettings) showSettings = false
+                if (showImport.value) showImport.value = false
+            }
 
             val darkTheme = when (themeMode) {
                 "Light" -> false
@@ -55,32 +56,33 @@ class MainActivity : ComponentActivity() {
                                 themeMode = mode
                                 appPrefs.edit().putString(KEY_THEME_MODE, mode).apply()
                             },
-                            onPerformSync = { scope.launch { syncManager.performSync() } }
+                            onPerformSync = { scope.launch { syncManager.performSync() } },
+                            onToggleSync = { enabled -> 
+                                getSharedPreferences("sync_prefs", Context.MODE_PRIVATE)
+                                    .edit().putBoolean("sync_enabled", enabled).apply()
+                            }
+                        )
+                    } else if (showImport.value) {
+                        ImportScreen(
+                            onBack = { showImport.value = false },
+                            onImportGallery = { /* TODO: Implement */ },
+                            onScanCamera = { /* TODO: Implement */ }
                         )
                     } else {
-                        // TODO: Implement proper navigation
-                        val showImport = remember { mutableStateOf(false) }
-                        
-                        if (showImport.value) {
-                            ImportScreen(
-                                onBack = { showImport.value = false },
-                                onImportGallery = { /* TODO */ },
-                                onScanCamera = { /* TODO */ }
-                            )
-                        } else {
-                            // Convert map of <String, *> to Map<String, String>
-                            var accountsMap by remember { mutableStateOf(secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }) }
-
-                            MainScreen(
-                                accounts = accountsMap,
-                                onOpenSettings = { showSettings = true },
-                                onNavigateToImport = { showImport.value = true },
-                                onDeleteAccount = { name ->
-                                    secureStorage.deleteAccount(name)
-                                    accountsMap = secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }
-                                }
-                            )
-                        }
+                        var accountsMap by remember { mutableStateOf(secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }) }
+                        MainScreen(
+                            accounts = accountsMap,
+                            onOpenSettings = { showSettings = true },
+                            onNavigateToImport = { showImport.value = true },
+                            onDeleteAccount = { name ->
+                                secureStorage.deleteAccount(name)
+                                accountsMap = secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }
+                            },
+                            onAddAccount = { name, secret ->
+                                secureStorage.saveAccount(name, secret)
+                                accountsMap = secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }
+                            }
+                        )
                     }
                 }
             }
