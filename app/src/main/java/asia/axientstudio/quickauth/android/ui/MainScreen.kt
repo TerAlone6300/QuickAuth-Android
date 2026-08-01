@@ -1,5 +1,8 @@
 package asia.axientstudio.quickauth.android.ui
 
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
@@ -21,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import asia.axientstudio.quickauth.android.R
@@ -143,12 +147,6 @@ fun AddAccountDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
         }
     )
 }
-import android.content.ClipboardManager
-import android.content.Context
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
-
-// ...
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -181,8 +179,6 @@ fun AccountItem(name: String, secret: String, onDelete: () -> Unit) {
                 onLongClick = { showMenu = true }
             )
     ) {
-//...
-
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(text = { Text("Edit") }, onClick = { /* TODO */ showMenu = false })
             DropdownMenuItem(text = { Text("Delete") }, onClick = { onDelete(); showMenu = false })
