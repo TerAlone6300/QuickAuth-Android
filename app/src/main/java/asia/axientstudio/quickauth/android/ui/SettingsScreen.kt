@@ -13,13 +13,15 @@ import androidx.compose.ui.unit.dp
 import asia.axientstudio.quickauth.android.R
 import java.util.Locale
 
+import androidx.compose.foundation.clickable
+// ... (imports)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
     themeMode: String,
     onThemeModeChange: (String) -> Unit,
-    onPerformSync: () -> Unit // Pass sync action
+    onPerformSync: () -> Unit
 ) {
     var language by remember { mutableStateOf(Locale.getDefault().language) }
 
@@ -36,20 +38,50 @@ fun SettingsScreen(
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
-            // ... (Theme and Language items stay same)
+            item {
+                Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleMedium)
+                listOf("System", "Light", "Dark").forEach { mode ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onThemeModeChange(mode) }
+                    ) {
+                        RadioButton(selected = themeMode == mode, onClick = { onThemeModeChange(mode) })
+                        Text(mode)
+                    }
+                }
+            }
+
+            item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
+
+            item {
+                Text("Language", style = MaterialTheme.typography.titleMedium)
+                listOf("en", "vi").forEach { lang ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { /* TODO: Locale change logic */ }
+                    ) {
+                        RadioButton(selected = language == lang, onClick = { language = lang })
+                        Text(if (lang == "en") "English" else "Tiếng Việt")
+                    }
+                }
+            }
 
             item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
 
             item {
                 Text(stringResource(R.string.security), style = MaterialTheme.typography.titleMedium)
-                // TODO: Biometric/Lock switches
+                Text("Biometric Authentication: Coming soon.")
             }
 
             item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
 
             item {
                 Text(stringResource(R.string.sync), style = MaterialTheme.typography.titleMedium)
-                Button(onClick = onPerformSync) {
+                Button(onClick = onPerformSync, modifier = Modifier.fillMaxWidth()) {
                     Text("Perform Sync Now")
                 }
             }
