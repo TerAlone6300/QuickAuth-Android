@@ -69,13 +69,16 @@ class MainActivity : ComponentActivity() {
                             )
                         } else {
                             // Convert map of <String, *> to Map<String, String>
-                            val accountsMap = secureStorage.getAllAccounts().mapValues {
-                                it.value?.toString() ?: ""
-                            }
+                            var accountsMap by remember { mutableStateOf(secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }) }
+
                             MainScreen(
                                 accounts = accountsMap,
                                 onOpenSettings = { showSettings = true },
-                                onNavigateToImport = { showImport.value = true }
+                                onNavigateToImport = { showImport.value = true },
+                                onDeleteAccount = { name ->
+                                    secureStorage.deleteAccount(name)
+                                    accountsMap = secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }
+                                }
                             )
                         }
                     }

@@ -32,7 +32,8 @@ import kotlinx.coroutines.delay
 fun MainScreen(
     accounts: Map<String, String>,
     onOpenSettings: () -> Unit = {},
-    onNavigateToImport: () -> Unit = {}
+    onNavigateToImport: () -> Unit = {},
+    onDeleteAccount: (String) -> Unit = {}
 ) {
     var fabExpanded by remember { mutableStateOf(false) }
     val rotation by animateFloatAsState(if (fabExpanded) 45f else 0f)
@@ -100,15 +101,40 @@ fun MainScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(accounts.keys.toList(), key = { it }) { accountName ->
-                AccountItem(name = accountName, secret = accounts[accountName] ?: "")
+                AccountItem(
+                    name = accountName, 
+                    secret = accounts[accountName] ?: "",
+                    onDelete = { onDeleteAccount(accountName) }
+                )
             }
         }
     }
+// ... after AccountItem
+
+@Composable
+fun AddAccountDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var secret by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Account") },
+        text = {
+            Column {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Account Name") })
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = secret, onValueChange = { secret = it }, label = { Text("Secret") })
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onAdd(name, secret) }) { Text("Add") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun AccountItem(name: String, secret: String) {
     var code by remember { mutableStateOf("") }
     var progress by remember { mutableStateOf(1f) }
     var showMenu by remember { mutableStateOf(false) }
@@ -133,7 +159,7 @@ fun AccountItem(name: String, secret: String) {
     ) {
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(text = { Text("Edit") }, onClick = { /* TODO */ showMenu = false })
-            DropdownMenuItem(text = { Text("Delete") }, onClick = { /* TODO */ showMenu = false })
+            DropdownMenuItem(text = { Text("Delete") }, onClick = { onDelete(); showMenu = false })
         }
 
         Row(

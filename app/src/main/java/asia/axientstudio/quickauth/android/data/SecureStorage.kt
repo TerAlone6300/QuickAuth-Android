@@ -21,6 +21,10 @@ class SecureStorage(context: Context) {
         sharedPreferences.edit().putString(name, secret).apply()
     }
 
+    fun deleteAccount(name: String) {
+        sharedPreferences.edit().remove(name).apply()
+    }
+
     fun getAccount(name: String): String? {
         return sharedPreferences.getString(name, null)
     }
