@@ -60,7 +60,9 @@ class MainActivity : ComponentActivity() {
                             onToggleSync = { enabled -> 
                                 getSharedPreferences("sync_prefs", Context.MODE_PRIVATE)
                                     .edit().putBoolean("sync_enabled", enabled).apply()
-                            }
+                            },
+                            syncEnabled = getSharedPreferences("sync_prefs", Context.MODE_PRIVATE)
+                                .getBoolean("sync_enabled", false)
                         )
                     } else if (showImport.value) {
                         ImportScreen(

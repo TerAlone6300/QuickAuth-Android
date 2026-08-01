@@ -82,6 +82,14 @@ fun SettingsScreen(
 
             item {
                 Text(stringResource(R.string.sync), style = MaterialTheme.typography.titleMedium)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().clickable { onToggleSync(!syncEnabled) }
+                ) {
+                    Switch(checked = syncEnabled, onCheckedChange = onToggleSync)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Enable Sync")
+                }
                 Button(onClick = onPerformSync, modifier = Modifier.fillMaxWidth()) {
                     Text("Perform Sync Now")
                 }
