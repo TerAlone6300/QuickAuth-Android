@@ -33,10 +33,19 @@ fun MainScreen(
     accounts: Map<String, String>,
     onOpenSettings: () -> Unit = {},
     onNavigateToImport: () -> Unit = {},
-    onDeleteAccount: (String) -> Unit = {}
+    onDeleteAccount: (String) -> Unit = {},
+    onAddAccount: (String, String) -> Unit = { _, _ -> }
 ) {
     var fabExpanded by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
     val rotation by animateFloatAsState(if (fabExpanded) 45f else 0f)
+
+    if (showAddDialog) {
+        AddAccountDialog(
+            onDismiss = { showAddDialog = false },
+            onAdd = { name, secret -> onAddAccount(name, secret); showAddDialog = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -66,7 +75,7 @@ fun MainScreen(
                         ExtendedFloatingActionButton(
                             text = { Text("Keyboard") },
                             icon = { Icon(Icons.Filled.Keyboard, contentDescription = null) },
-                            onClick = { fabExpanded = false /* TODO: Navigate to Add Account */ }
+                            onClick = { fabExpanded = false; showAddDialog = true }
                         )
                         ExtendedFloatingActionButton(
                             text = { Text("Camera") },
@@ -109,7 +118,7 @@ fun MainScreen(
             }
         }
     }
-// ... after AccountItem
+}
 
 @Composable
 fun AddAccountDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
@@ -135,6 +144,9 @@ fun AddAccountDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun AccountItem(name: String, secret: String, onDelete: () -> Unit) {
     var code by remember { mutableStateOf("") }
     var progress by remember { mutableStateOf(1f) }
     var showMenu by remember { mutableStateOf(false) }
