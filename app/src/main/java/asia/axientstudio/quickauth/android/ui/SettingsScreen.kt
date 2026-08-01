@@ -21,7 +21,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     themeMode: String,
     onThemeModeChange: (String) -> Unit,
-    onPerformSync: () -> Unit
+    onPerformSync: () -> Unit,
+    onToggleSync: (Boolean) -> Unit
 ) {
     var language by remember { mutableStateOf(Locale.getDefault().language) }
 
