@@ -65,8 +65,8 @@ class MainActivity : ComponentActivity() {
                     } else if (showImport.value) {
                         ImportScreen(
                             onBack = { showImport.value = false },
-                            onImportGallery = { /* TODO: Implement */ },
-                            onScanCamera = { /* TODO: Implement */ }
+                            onImportGallery = { uri -> /* TODO: Process URI */ },
+                            onScanCamera = { /* TODO: Launch Camera Intent */ }
                         )
                     } else {
                         var accountsMap by remember { mutableStateOf(secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }) }

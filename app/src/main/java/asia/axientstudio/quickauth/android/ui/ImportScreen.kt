@@ -1,5 +1,7 @@
 package asia.axientstudio.quickauth.android.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -15,9 +17,15 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ImportScreen(
     onBack: () -> Unit,
-    onImportGallery: () -> Unit,
+    onImportGallery: (String) -> Unit,
     onScanCamera: () -> Unit
 ) {
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { onImportGallery(it.toString()) }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -39,7 +47,7 @@ fun ImportScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = onImportGallery,
+                onClick = { galleryLauncher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
