@@ -143,6 +143,12 @@ fun AddAccountDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
         }
     )
 }
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+
+// ...
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -150,6 +156,7 @@ fun AccountItem(name: String, secret: String, onDelete: () -> Unit) {
     var code by remember { mutableStateOf("") }
     var progress by remember { mutableStateOf(1f) }
     var showMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(secret) {
         while(true) {
@@ -165,10 +172,17 @@ fun AccountItem(name: String, secret: String, onDelete: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = { /* TODO: Copy code */ },
+                onClick = {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = android.content.ClipData.newPlainText("TOTP Code", code)
+                    clipboard.setPrimaryClip(clip)
+                    Toast.makeText(context, "Code copied", Toast.LENGTH_SHORT).show()
+                },
                 onLongClick = { showMenu = true }
             )
     ) {
+//...
+
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(text = { Text("Edit") }, onClick = { /* TODO */ showMenu = false })
             DropdownMenuItem(text = { Text("Delete") }, onClick = { onDelete(); showMenu = false })
