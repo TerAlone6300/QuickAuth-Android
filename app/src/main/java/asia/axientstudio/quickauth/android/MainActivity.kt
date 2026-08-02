@@ -2,7 +2,7 @@ package asia.axientstudio.quickauth.android
 
 import android.content.Context
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,17 +19,32 @@ import kotlinx.coroutines.launch
 
 private const val PREFS_NAME = "app_prefs"
 private const val KEY_THEME_MODE = "theme_mode"
+import asia.axientstudio.quickauth.android.security.BiometricAuthManager
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val secureStorage = SecureStorage(this)
         val syncManager = SyncManager(this, secureStorage)
         val appPrefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val biometricAuthManager = BiometricAuthManager(this)
 
         setContent {
             val scope = rememberCoroutineScope()
+            var isAuthenticated by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                biometricAuthManager.authenticate(
+                    onSuccess = { isAuthenticated = true },
+                    onError = { finish() }
+                )
+            }
+
+            if (!isAuthenticated) return@setContent
+
+            var themeMode by remember { mutableStateOf(appPrefs.getString(KEY_THEME_MODE, "System") ?: "System") }
+        //...
             var themeMode by remember { mutableStateOf(appPrefs.getString(KEY_THEME_MODE, "System") ?: "System") }
             var showSettings by remember { mutableStateOf(false) }
             val showImport = remember { mutableStateOf(false) }
