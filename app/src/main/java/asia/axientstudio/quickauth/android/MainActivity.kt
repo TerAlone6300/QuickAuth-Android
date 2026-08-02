@@ -82,8 +82,8 @@ class MainActivity : FragmentActivity() {
                     } else if (showImport.value) {
                         ImportScreen(
                             onBack = { showImport.value = false },
-                            onImportGallery = { uri -> /* TODO: Process URI */ },
-                            onScanCamera = { /* TODO: Launch Camera Intent */ }
+                            onImportGallery = { uri -> Toast.makeText(this, "Importing: $uri", Toast.LENGTH_SHORT).show() },
+                            onScanCamera = { Toast.makeText(this, "Camera scan not yet fully implemented", Toast.LENGTH_SHORT).show() }
                         )
                     } else {
                         var accountsMap by remember { mutableStateOf(secureStorage.getAllAccounts().mapValues { it.value?.toString() ?: "" }) }

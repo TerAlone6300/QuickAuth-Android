@@ -62,7 +62,7 @@ fun ImportScreen(
                 Text("Import from Gallery")
             }
             Button(
-                onClick = { cameraLauncher.launch() },
+                onClick = { onScanCamera() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Filled.CameraAlt, contentDescription = null)
