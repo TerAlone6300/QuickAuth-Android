@@ -2,6 +2,7 @@ package asia.axientstudio.quickauth.android
 
 import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -11,15 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import asia.axientstudio.quickauth.android.data.SecureStorage
 import asia.axientstudio.quickauth.android.network.SyncManager
+import asia.axientstudio.quickauth.android.security.BiometricAuthManager
 import asia.axientstudio.quickauth.android.ui.ImportScreen
 import asia.axientstudio.quickauth.android.ui.MainScreen
 import asia.axientstudio.quickauth.android.ui.SettingsScreen
 import asia.axientstudio.quickauth.android.ui.theme.QuickAuthTheme
 import kotlinx.coroutines.launch
-
-private const val PREFS_NAME = "app_prefs"
-private const val KEY_THEME_MODE = "theme_mode"
-import asia.axientstudio.quickauth.android.security.BiometricAuthManager
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
