@@ -19,6 +19,9 @@ import asia.axientstudio.quickauth.android.ui.SettingsScreen
 import asia.axientstudio.quickauth.android.ui.theme.QuickAuthTheme
 import kotlinx.coroutines.launch
 
+private const val PREFS_NAME = "app_prefs"
+private const val KEY_THEME_MODE = "theme_mode"
+
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,8 +44,6 @@ class MainActivity : FragmentActivity() {
 
             if (!isAuthenticated) return@setContent
 
-            var themeMode by remember { mutableStateOf(appPrefs.getString(KEY_THEME_MODE, "System") ?: "System") }
-        //...
             var themeMode by remember { mutableStateOf(appPrefs.getString(KEY_THEME_MODE, "System") ?: "System") }
             var showSettings by remember { mutableStateOf(false) }
             val showImport = remember { mutableStateOf(false) }
