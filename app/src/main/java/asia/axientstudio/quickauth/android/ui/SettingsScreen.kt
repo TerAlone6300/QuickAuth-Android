@@ -1,5 +1,6 @@
 package asia.axientstudio.quickauth.android.ui
 
+import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,6 +21,7 @@ import asia.axientstudio.quickauth.android.R
 import asia.axientstudio.quickauth.android.network.AuthResult
 import asia.axientstudio.quickauth.android.network.SyncManager
 import asia.axientstudio.quickauth.android.network.SyncResult
+import asia.axientstudio.quickauth.android.security.LockTimeout
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -35,7 +37,11 @@ fun SettingsScreen(
     themeMode: String,
     onThemeModeChange: (String) -> Unit,
     syncManager: SyncManager,
-    onSyncStateChanged: () -> Unit = {}
+    onSyncStateChanged: () -> Unit = {},
+    biometricEnabled: Boolean = true,
+    onBiometricEnabledChange: (Boolean) -> Unit = {},
+    lockTimeout: LockTimeout = LockTimeout.IMMEDIATE,
+    onLockTimeoutChange: (LockTimeout) -> Unit = {}
 ) {
     var language by remember { mutableStateOf(Locale.getDefault().language) }
     val scope = rememberCoroutineScope()
@@ -141,7 +147,71 @@ fun SettingsScreen(
 
             item {
                 Text(stringResource(R.string.security), style = MaterialTheme.typography.titleMedium)
-                Text("Biometric Authentication: Coming soon.")
+                Text(
+                    "• Screenshots and screen recording are blocked system-wide while the app is open (FLAG_SECURE).\n" +
+                    "• The Recents (app switcher) preview shows a blank screen instead of your accounts.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                val manufacturer = Build.MANUFACTURER.lowercase()
+                val isLikelyColorOs = manufacturer.contains("oppo") ||
+                    manufacturer.contains("oneplus") ||
+                    manufacturer.contains("realme")
+                if (isLikelyColorOs) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Your device likely runs ColorOS. For extra protection in the Recents screen, " +
+                        "you can also enable ColorOS's own \"Hide content\" (App Lock → Hide content) " +
+                        "for QuickAuth in system Settings — this is a system feature and must be turned " +
+                        "on manually, the app cannot enable it for you.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        onBiometricEnabledChange(!biometricEnabled)
+                    }
+                ) {
+                    Switch(checked = biometricEnabled, onCheckedChange = onBiometricEnabledChange)
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text("Require fingerprint/face to open")
+                        Text(
+                            "No device PIN/pattern/password fallback — biometric only.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                if (biometricEnabled) {
+                    Spacer(Modifier.height(12.dp))
+                    Text("Lock timing", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Choose how long the app can stay in the background before it locks again.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LockTimeout.entries.forEach { option ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onLockTimeoutChange(option) }
+                        ) {
+                            RadioButton(
+                                selected = lockTimeout == option,
+                                onClick = { onLockTimeoutChange(option) }
+                            )
+                            Text(option.label)
+                        }
+                    }
+                }
             }
 
             item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }

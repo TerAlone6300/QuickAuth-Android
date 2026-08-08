@@ -2,6 +2,7 @@ package asia.axientstudio.quickauth.android
 
 import android.content.Context
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.BackHandler
@@ -10,9 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ProcessLifecycleOwner
 import asia.axientstudio.quickauth.android.data.SecureStorage
 import asia.axientstudio.quickauth.android.network.SyncManager
 import asia.axientstudio.quickauth.android.security.BiometricAuthManager
+import asia.axientstudio.quickauth.android.security.LockPreferences
+import asia.axientstudio.quickauth.android.security.LockTimeout
 import asia.axientstudio.quickauth.android.ui.ImportScreen
 import asia.axientstudio.quickauth.android.ui.MainScreen
 import asia.axientstudio.quickauth.android.ui.SettingsScreen
@@ -26,23 +32,87 @@ private const val KEY_THEME_MODE = "theme_mode"
 private const val KEY_HAS_PROMPTED_SYNC = "has_prompted_sync_setup"
 
 class MainActivity : FragmentActivity() {
+
+    // Timestamp (elapsedRealtime-independent wall clock is fine here since we
+    // only care about "how long was the app backgrounded") of the last time
+    // the whole app (not just this activity) left the foreground. Read/written
+    // from a process-wide lifecycle observer so switching between in-app
+    // screens (Settings, Import) never counts as "leaving the app".
+    private var backgroundedAtMillis: Long? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Screen-capture protection: FLAG_SECURE blocks screenshots and screen
+        // recording for this window (including third-party recording/casting
+        // apps), renders the window's content as blank/black in the system
+        // Recents (app switcher) thumbnail, and blocks screen mirroring/casting.
+        // This must be set before setContent() and applies for the entire
+        // lifetime of the activity/window.
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
 
         val secureStorage = SecureStorage(this)
         val syncManager = SyncManager(this, secureStorage)
         val appPrefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val biometricAuthManager = BiometricAuthManager(this)
+        val lockPreferences = LockPreferences(this)
 
         setContent {
             val scope = rememberCoroutineScope()
-            var isAuthenticated by remember { mutableStateOf(false) }
 
-            LaunchedEffect(Unit) {
+            // If the user disabled the biometric lock entirely, skip the
+            // authentication gate altogether and start "unlocked".
+            var biometricEnabled by remember { mutableStateOf(lockPreferences.biometricEnabled) }
+            var lockTimeout by remember { mutableStateOf(lockPreferences.lockTimeout) }
+            var isAuthenticated by remember { mutableStateOf(!biometricEnabled) }
+
+            fun runBiometricAuth() {
                 biometricAuthManager.authenticate(
                     onSuccess = { isAuthenticated = true },
                     onError = { finish() }
                 )
+            }
+
+            // Single source of truth for triggering the prompt: fires on first
+            // composition, and again any time isAuthenticated flips back to
+            // false (e.g. re-lock after the configured background timeout).
+            LaunchedEffect(isAuthenticated) {
+                if (!isAuthenticated && biometricEnabled) runBiometricAuth()
+            }
+
+            // Re-lock policy, observed at the process level: when the whole
+            // app leaves the foreground we record the time; when it returns,
+            // if biometric lock is enabled and the configured timeout has
+            // elapsed (or is set to "Immediately"), require re-authentication
+            // before showing any account data again.
+            DisposableEffect(biometricEnabled, lockTimeout) {
+                val observer = LifecycleEventObserver { _, event ->
+                    when (event) {
+                        Lifecycle.Event.ON_STOP -> {
+                            if (biometricEnabled) {
+                                backgroundedAtMillis = System.currentTimeMillis()
+                            }
+                        }
+                        Lifecycle.Event.ON_START -> {
+                            val leftAt = backgroundedAtMillis
+                            if (biometricEnabled && leftAt != null) {
+                                val elapsed = System.currentTimeMillis() - leftAt
+                                if (elapsed >= lockTimeout.millis) {
+                                    isAuthenticated = false
+                                }
+                            }
+                            backgroundedAtMillis = null
+                        }
+                        else -> Unit
+                    }
+                }
+                ProcessLifecycleOwner.get().lifecycle.addObserver(observer)
+                onDispose {
+                    ProcessLifecycleOwner.get().lifecycle.removeObserver(observer)
+                }
             }
 
             if (!isAuthenticated) return@setContent
@@ -127,6 +197,20 @@ class MainActivity : FragmentActivity() {
                                 // Accounts may have been updated/merged by a sync pass;
                                 // refresh the in-memory map shown on MainScreen.
                                 refreshAccounts()
+                            },
+                            biometricEnabled = biometricEnabled,
+                            onBiometricEnabledChange = { enabled ->
+                                biometricEnabled = enabled
+                                lockPreferences.biometricEnabled = enabled
+                                // Turning the lock off unlocks immediately; turning it
+                                // on takes effect from the next backgrounding, current
+                                // session stays unlocked so the user isn't immediately
+                                // re-prompted for the change they just made.
+                            },
+                            lockTimeout = lockTimeout,
+                            onLockTimeoutChange = { timeout ->
+                                lockTimeout = timeout
+                                lockPreferences.lockTimeout = timeout
                             }
                         )
                     } else if (showImport.value) {
