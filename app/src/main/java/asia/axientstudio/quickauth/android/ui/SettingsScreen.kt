@@ -352,7 +352,7 @@ private fun SectionLabel(text: String) {
  */
 @Composable
 private fun SectionDivider() {
-    HorizontalDivider(
+    Divider(
         modifier  = Modifier.padding(vertical = 20.dp),
         color     = MaterialTheme.colorScheme.outline,
         thickness = 1.dp
