@@ -1,8 +1,10 @@
 package asia.axientstudio.quickauth.android.ui
 
 import android.os.Build
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -106,20 +109,49 @@ fun SettingsScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
+            // Match MainScreen header style: flat row with 1dp bottom border,
+            // no elevation, no shadow.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(0.dp)
+                    )
+                    .padding(start = 4.dp, end = 20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
-            )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    stringResource(R.string.settings),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
     ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(padding)
+                .padding(horizontal = 20.dp),
+            contentPadding = PaddingValues(vertical = 20.dp)
+        ) {
             item {
-                Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleMedium)
+                SectionLabel(stringResource(R.string.theme))
+                Spacer(Modifier.height(8.dp))
                 val themeOptions = listOf(
                     "System" to stringResource(R.string.theme_system),
                     "Light" to stringResource(R.string.theme_light),
@@ -138,10 +170,10 @@ fun SettingsScreen(
                 }
             }
 
-            item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
+            item { SectionDivider() }
 
             item {
-                Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium)
+                SectionLabel(stringResource(R.string.language))
                 val languageOptions = listOf(
                     "" to stringResource(R.string.language_system_default),
                     "en" to stringResource(R.string.language_english),
@@ -163,10 +195,10 @@ fun SettingsScreen(
                 }
             }
 
-            item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
+            item { SectionDivider() }
 
             item {
-                Text(stringResource(R.string.security), style = MaterialTheme.typography.titleMedium)
+                SectionLabel(stringResource(R.string.security))
                 Text(
                     stringResource(R.string.security_flag_secure_desc),
                     style = MaterialTheme.typography.bodySmall
@@ -230,10 +262,10 @@ fun SettingsScreen(
                 }
             }
 
-            item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
+            item { SectionDivider() }
 
             item {
-                Text(stringResource(R.string.sync), style = MaterialTheme.typography.titleMedium)
+                SectionLabel(stringResource(R.string.sync))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -299,6 +331,32 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+/**
+ * Section label — uppercase tracking eyebrow, matches Linear's "chrome recedes"
+ * principle: small, muted, purely informational.
+ */
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text     = text.uppercase(),
+        style    = MaterialTheme.typography.labelSmall,
+        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+}
+
+/**
+ * Section divider with consistent vertical breathing room.
+ */
+@Composable
+private fun SectionDivider() {
+    HorizontalDivider(
+        modifier  = Modifier.padding(vertical = 20.dp),
+        color     = MaterialTheme.colorScheme.outline,
+        thickness = 1.dp
+    )
 }
 
 /**
