@@ -36,6 +36,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     themeMode: String,
     onThemeModeChange: (String) -> Unit,
+    currentLanguageTag: String = "",
+    onLanguageChange: (String) -> Unit = {},
     syncManager: SyncManager,
     onSyncStateChanged: () -> Unit = {},
     biometricEnabled: Boolean = true,
@@ -43,7 +45,6 @@ fun SettingsScreen(
     lockTimeout: LockTimeout = LockTimeout.IMMEDIATE,
     onLockTimeoutChange: (LockTimeout) -> Unit = {}
 ) {
-    var language by remember { mutableStateOf(Locale.getDefault().language) }
     val scope = rememberCoroutineScope()
 
     var syncEnabled by remember { mutableStateOf(syncManager.isSyncEnabled) }
@@ -52,6 +53,12 @@ fun SettingsScreen(
     var syncBusy by remember { mutableStateOf(false) }
     var syncStatus by remember { mutableStateOf<String?>(null) }
     var syncStatusIsError by remember { mutableStateOf(false) }
+
+    // Resolved once per composition (Composable scope) so they can be safely
+    // referenced from non-Composable lambdas (runSync, callbacks) below.
+    val syncConfiguredSuccessText = stringResource(R.string.sync_configured_success)
+    val syncSessionRevokedTemplate = stringResource(R.string.sync_session_revoked)
+    val syncCompletedTemplate = stringResource(R.string.sync_completed)
 
     fun refreshSyncState() {
         syncEnabled = syncManager.isSyncEnabled
@@ -66,12 +73,12 @@ fun SettingsScreen(
             when (val result = syncManager.performSync()) {
                 is SyncResult.Success -> {
                     syncStatusIsError = false
-                    syncStatus = "Sync completed (${result.accountCount} accounts total)"
+                    syncStatus = syncCompletedTemplate.format(result.accountCount)
                     onSyncStateChanged()
                 }
                 is SyncResult.SessionInvalidated -> {
                     syncStatusIsError = true
-                    syncStatus = "Session revoked (${result.message}). Please set up sync again."
+                    syncStatus = syncSessionRevokedTemplate.format(result.message)
                     refreshSyncState()
                 }
                 is SyncResult.Error -> {
@@ -92,7 +99,7 @@ fun SettingsScreen(
                 showSetupDialog = false
                 refreshSyncState()
                 syncStatusIsError = false
-                syncStatus = "Sync configured successfully!"
+                syncStatus = syncConfiguredSuccessText
                 runSync()
             }
         )
@@ -113,7 +120,12 @@ fun SettingsScreen(
         LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
             item {
                 Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleMedium)
-                listOf("System", "Light", "Dark").forEach { mode ->
+                val themeOptions = listOf(
+                    "System" to stringResource(R.string.theme_system),
+                    "Light" to stringResource(R.string.theme_light),
+                    "Dark" to stringResource(R.string.theme_dark)
+                )
+                themeOptions.forEach { (mode, label) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -121,7 +133,7 @@ fun SettingsScreen(
                             .clickable { onThemeModeChange(mode) }
                     ) {
                         RadioButton(selected = themeMode == mode, onClick = { onThemeModeChange(mode) })
-                        Text(mode)
+                        Text(label)
                     }
                 }
             }
@@ -129,16 +141,24 @@ fun SettingsScreen(
             item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
 
             item {
-                Text("Language", style = MaterialTheme.typography.titleMedium)
-                listOf("en", "vi").forEach { lang ->
+                Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium)
+                val languageOptions = listOf(
+                    "" to stringResource(R.string.language_system_default),
+                    "en" to stringResource(R.string.language_english),
+                    "vi" to stringResource(R.string.language_vietnamese)
+                )
+                languageOptions.forEach { (tag, label) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { /* TODO: Locale change logic */ }
+                            .clickable { onLanguageChange(tag) }
                     ) {
-                        RadioButton(selected = language == lang, onClick = { language = lang })
-                        Text(if (lang == "en") "English" else "Tiếng Việt")
+                        RadioButton(
+                            selected = currentLanguageTag == tag,
+                            onClick = { onLanguageChange(tag) }
+                        )
+                        Text(label)
                     }
                 }
             }
@@ -148,8 +168,7 @@ fun SettingsScreen(
             item {
                 Text(stringResource(R.string.security), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "• Screenshots and screen recording are blocked system-wide while the app is open (FLAG_SECURE).\n" +
-                    "• The Recents (app switcher) preview shows a blank screen instead of your accounts.",
+                    stringResource(R.string.security_flag_secure_desc),
                     style = MaterialTheme.typography.bodySmall
                 )
 
@@ -160,10 +179,7 @@ fun SettingsScreen(
                 if (isLikelyColorOs) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Your device likely runs ColorOS. For extra protection in the Recents screen, " +
-                        "you can also enable ColorOS's own \"Hide content\" (App Lock → Hide content) " +
-                        "for QuickAuth in system Settings — this is a system feature and must be turned " +
-                        "on manually, the app cannot enable it for you.",
+                        stringResource(R.string.security_coloros_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -180,9 +196,9 @@ fun SettingsScreen(
                     Switch(checked = biometricEnabled, onCheckedChange = onBiometricEnabledChange)
                     Spacer(Modifier.width(8.dp))
                     Column {
-                        Text("Require fingerprint/face to open")
+                        Text(stringResource(R.string.security_require_biometric))
                         Text(
-                            "No device PIN/pattern/password fallback — biometric only.",
+                            stringResource(R.string.security_no_fallback),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -191,9 +207,9 @@ fun SettingsScreen(
 
                 if (biometricEnabled) {
                     Spacer(Modifier.height(12.dp))
-                    Text("Lock timing", style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.security_lock_timing), style = MaterialTheme.typography.titleSmall)
                     Text(
-                        "Choose how long the app can stay in the background before it locks again.",
+                        stringResource(R.string.security_lock_timing_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -208,7 +224,7 @@ fun SettingsScreen(
                                 selected = lockTimeout == option,
                                 onClick = { onLockTimeoutChange(option) }
                             )
-                            Text(option.label)
+                            Text(stringResource(option.labelRes))
                         }
                     }
                 }
@@ -243,10 +259,10 @@ fun SettingsScreen(
                     )
                     Spacer(Modifier.width(8.dp))
                     Column {
-                        Text("Enable Sync")
+                        Text(stringResource(R.string.sync_enable_toggle))
                         if (syncEnabled && syncUser != null) {
                             Text(
-                                "Logged in as $syncUser",
+                                stringResource(R.string.sync_logged_in_as, syncUser ?: ""),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -269,7 +285,7 @@ fun SettingsScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text("Perform Sync Now")
+                    Text(stringResource(R.string.sync_perform_now))
                 }
 
                 syncStatus?.let { status ->
@@ -315,14 +331,22 @@ fun SyncSetupDialog(
     var submitting by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Resolved once per composition so the non-Composable validation/submit
+    // functions below can safely reference them.
+    val urlRequiredText = stringResource(R.string.sync_url_required)
+    val urlSchemeErrorText = stringResource(R.string.sync_url_scheme_error)
+    val checkUsernameFirstText = stringResource(R.string.sync_check_username_first)
+    val passwordRequiredText = stringResource(R.string.sync_password_required)
+    val passwordsMismatchText = stringResource(R.string.sync_passwords_mismatch)
+
     fun proceedFromUrl() {
         val trimmed = url.trim()
         if (trimmed.isEmpty()) {
-            urlError = "URL is required"
+            urlError = urlRequiredText
             return
         }
         if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-            urlError = "URL must start with http:// or https://"
+            urlError = urlSchemeErrorText
             return
         }
         if (trimmed.startsWith("http://") && !insecureWarning) {
@@ -348,15 +372,15 @@ fun SyncSetupDialog(
     fun submit() {
         val exists = userExists
         if (exists == null) {
-            errorMessage = "Please check the username first"
+            errorMessage = checkUsernameFirstText
             return
         }
         if (pass.isEmpty()) {
-            errorMessage = "Password is required"
+            errorMessage = passwordRequiredText
             return
         }
         if (!exists && pass != passConfirm) {
-            errorMessage = "Passwords do not match!"
+            errorMessage = passwordsMismatchText
             return
         }
         scope.launch {
@@ -372,14 +396,14 @@ fun SyncSetupDialog(
 
     AlertDialog(
         onDismissRequest = { if (!submitting) onDismiss() },
-        title = { Text(if (step == SyncSetupStep.URL) "Enable Code Sync" else "Sync Account") },
+        title = { Text(if (step == SyncSetupStep.URL) stringResource(R.string.sync_enable_title) else stringResource(R.string.sync_account_title)) },
         text = {
             Column {
                 if (step == SyncSetupStep.URL) {
                     OutlinedTextField(
                         value = url,
                         onValueChange = { url = it; urlError = null; insecureWarning = false },
-                        label = { Text("Server URL (http/https)") },
+                        label = { Text(stringResource(R.string.sync_server_url)) },
                         singleLine = true,
                         isError = urlError != null,
                         modifier = Modifier.fillMaxWidth()
@@ -390,7 +414,7 @@ fun SyncSetupDialog(
                     if (insecureWarning) {
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "⚠️ WARNING: YOU ARE USING INSECURE HTTP!\nPasswords and TOTP secrets can be intercepted.",
+                            stringResource(R.string.sync_insecure_warning),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -399,7 +423,7 @@ fun SyncSetupDialog(
                     OutlinedTextField(
                         value = user,
                         onValueChange = { user = it; userExists = null; errorMessage = null },
-                        label = { Text("Username") },
+                        label = { Text(stringResource(R.string.sync_username)) },
                         singleLine = true,
                         trailingIcon = {
                             if (checkingUser) {
@@ -410,13 +434,13 @@ fun SyncSetupDialog(
                     )
                     Spacer(Modifier.height(4.dp))
                     TextButton(onClick = { checkUser() }, enabled = user.isNotBlank() && !checkingUser) {
-                        Text("Check username")
+                        Text(stringResource(R.string.sync_check_username))
                     }
 
                     userExists?.let { exists ->
                         Text(
-                            if (exists) "Account found — enter your password to login."
-                            else "Username not found — create a new password to register.",
+                            if (exists) stringResource(R.string.sync_user_found)
+                            else stringResource(R.string.sync_user_not_found),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -426,7 +450,7 @@ fun SyncSetupDialog(
                         OutlinedTextField(
                             value = pass,
                             onValueChange = { pass = it; errorMessage = null },
-                            label = { Text(if (exists) "Password" else "Create a new password") },
+                            label = { Text(if (exists) stringResource(R.string.sync_password) else stringResource(R.string.sync_new_password)) },
                             singleLine = true,
                             visualTransformation = visualTransform,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -446,7 +470,7 @@ fun SyncSetupDialog(
                             OutlinedTextField(
                                 value = passConfirm,
                                 onValueChange = { passConfirm = it; errorMessage = null },
-                                label = { Text("Confirm password") },
+                                label = { Text(stringResource(R.string.sync_confirm_password)) },
                                 singleLine = true,
                                 visualTransformation = visualTransform,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -466,7 +490,7 @@ fun SyncSetupDialog(
             when (step) {
                 SyncSetupStep.URL -> {
                     Button(onClick = { proceedFromUrl() }) {
-                        Text(if (insecureWarning) "Continue anyway" else "Next")
+                        Text(if (insecureWarning) stringResource(R.string.sync_continue_anyway) else stringResource(R.string.sync_next))
                     }
                 }
                 SyncSetupStep.CREDENTIALS -> {
@@ -475,7 +499,7 @@ fun SyncSetupDialog(
                             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                             Spacer(Modifier.width(8.dp))
                         }
-                        Text(if (userExists == false) "Register" else "Login")
+                        Text(if (userExists == false) stringResource(R.string.sync_register) else stringResource(R.string.sync_login))
                     }
                 }
             }
@@ -488,7 +512,7 @@ fun SyncSetupDialog(
                     onDismiss()
                 }
             }, enabled = !submitting) {
-                Text(if (step == SyncSetupStep.CREDENTIALS) "Back" else "Cancel")
+                Text(if (step == SyncSetupStep.CREDENTIALS) stringResource(R.string.sync_back) else stringResource(R.string.sync_cancel))
             }
         }
     )
@@ -506,15 +530,15 @@ fun SyncFirstLaunchDialog(
 ) {
     AlertDialog(
         onDismissRequest = onSkip,
-        title = { Text("Enable Code Sync?") },
+        title = { Text(stringResource(R.string.sync_first_launch_title)) },
         text = {
-            Text("You can sync your accounts across devices using your own self-hosted QuickAuth server. This is optional — you can always set it up later from Settings.")
+            Text(stringResource(R.string.sync_first_launch_body))
         },
         confirmButton = {
-            Button(onClick = onEnable) { Text("Yes (Enable Sync)") }
+            Button(onClick = onEnable) { Text(stringResource(R.string.sync_first_launch_yes)) }
         },
         dismissButton = {
-            TextButton(onClick = onSkip) { Text("No (Local Only)") }
+            TextButton(onClick = onSkip) { Text(stringResource(R.string.sync_first_launch_no)) }
         }
     )
 }

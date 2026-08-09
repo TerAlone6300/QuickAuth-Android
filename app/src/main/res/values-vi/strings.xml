@@ -4,9 +4,6 @@
     <string name="settings">Cài đặt</string>
     <string name="back">Quay lại</string>
     <string name="theme">Giao diện</string>
-    <string name="system">Hệ thống</string>
-    <string name="light">Sáng</string>
-    <string name="dark">Tối</string>
     <string name="security">Bảo mật</string>
     <string name="sync">Đồng bộ</string>
     <string name="no_accounts">Chưa có tài khoản</string>
@@ -37,4 +34,64 @@
     <string name="sync_completed">Đồng bộ hoàn tất (%1$d tài khoản)</string>
     <string name="sync_session_revoked">Phiên đồng bộ đã bị hủy (%1$s). Vui lòng thiết lập lại.</string>
     <string name="sync_logged_in_as">Đã đăng nhập với %1$s</string>
+
+    <!-- Theme -->
+    <string name="theme_system">Hệ thống</string>
+    <string name="theme_light">Sáng</string>
+    <string name="theme_dark">Tối</string>
+
+    <!-- Language -->
+    <string name="language">Ngôn ngữ</string>
+    <string name="language_system_default">Theo hệ thống</string>
+    <string name="language_english">English</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
+
+    <!-- Security section -->
+    <string name="security_flag_secure_desc">• Chụp màn hình và quay màn hình bị chặn trên toàn hệ thống khi ứng dụng đang mở (FLAG_SECURE).\n• Bản xem trước trong Ứng dụng gần đây chỉ hiện màn hình trống thay vì tài khoản của bạn.</string>
+    <string name="security_coloros_hint">Thiết bị của bạn có thể đang chạy ColorOS. Để bảo vệ thêm ở màn hình Gần đây, bạn cũng có thể bật tính năng \"Ẩn nội dung\" riêng của ColorOS (Khoá ứng dụng → Ẩn nội dung) cho QuickAuth trong Cài đặt hệ thống — đây là tính năng của hệ điều hành và phải bật thủ công, ứng dụng không thể tự bật giúp bạn.</string>
+    <string name="security_require_biometric">Yêu cầu vân tay/khuôn mặt để mở</string>
+    <string name="security_no_fallback">Không có phương án dự phòng bằng PIN/hình mẫu/mật khẩu máy — chỉ dùng sinh trắc học.</string>
+    <string name="security_lock_timing">Thời gian khoá</string>
+    <string name="security_lock_timing_desc">Chọn thời gian ứng dụng có thể ở chế độ nền trước khi khoá lại.</string>
+    <string name="lock_timeout_immediate">Khoá ngay khi thoát</string>
+    <string name="lock_timeout_1min">1 phút sau khi thoát</string>
+    <string name="lock_timeout_5min">5 phút sau khi thoát</string>
+    <string name="lock_timeout_15min">15 phút sau khi thoát</string>
+
+    <!-- Sync toggle -->
+    <string name="sync_enable_toggle">Bật đồng bộ</string>
+
+    <!-- Biometric prompt -->
+    <string name="biometric_prompt_title">Mở khoá QuickAuth</string>
+    <string name="biometric_prompt_subtitle">Cần xác thực sinh trắc học</string>
+    <string name="biometric_prompt_cancel">Hủy</string>
+    <string name="biometric_not_enrolled_error">Thiết bị chưa đăng ký sinh trắc học (vân tay/khuôn mặt). Vui lòng đăng ký trong cài đặt hệ thống để dùng QuickAuth.</string>
+    <string name="biometric_auth_failed">Xác thực thất bại</string>
+
+    <!-- Main / account list -->
+    <string name="app_name_title">QuickAuth</string>
+    <string name="action_keyboard">Bàn phím</string>
+    <string name="action_camera">Máy ảnh</string>
+    <string name="action_add">Thêm</string>
+    <string name="action_edit">Sửa</string>
+    <string name="action_delete">Xoá</string>
+    <string name="add_account_title">Thêm tài khoản</string>
+    <string name="account_name_label">Tên tài khoản</string>
+    <string name="secret_label">Mã bí mật</string>
+    <string name="add">Thêm</string>
+    <string name="cancel">Hủy</string>
+    <string name="code_copied">Đã sao chép mã</string>
+
+    <!-- Import screen -->
+    <string name="import_account_title">Nhập tài khoản</string>
+    <string name="import_from_gallery">Nhập từ thư viện ảnh</string>
+    <string name="scan_with_camera">Quét bằng máy ảnh</string>
+    <string name="importing_toast">Đang nhập: %1$s</string>
+    <string name="camera_scan_not_implemented">Chức năng quét bằng máy ảnh chưa hoàn thiện</string>
+
+    <!-- Sync first-launch prompt -->
+    <string name="sync_first_launch_title">Bật đồng bộ mã?</string>
+    <string name="sync_first_launch_body">Bạn có thể đồng bộ tài khoản giữa các thiết bị bằng máy chủ QuickAuth tự triển khai của riêng bạn. Đây là tính năng tùy chọn — bạn luôn có thể thiết lập sau trong Cài đặt.</string>
+    <string name="sync_first_launch_yes">Có (Bật đồng bộ)</string>
+    <string name="sync_first_launch_no">Không (Chỉ dùng cục bộ)</string>
 </resources>

@@ -1,17 +1,18 @@
 package asia.axientstudio.quickauth.android.security
 
 import android.content.Context
+import asia.axientstudio.quickauth.android.R
 
 /**
  * Options for how long the app may sit in the background before it requires
  * biometric re-authentication again. "Immediately" re-locks the instant the
  * app leaves the foreground (matches leaving/backgrounding the app).
  */
-enum class LockTimeout(val minutes: Long, val label: String) {
-    IMMEDIATE(0L, "Immediately on exit"),
-    ONE_MINUTE(1L, "1 minute after exit"),
-    FIVE_MINUTES(5L, "5 minutes after exit"),
-    FIFTEEN_MINUTES(15L, "15 minutes after exit");
+enum class LockTimeout(val minutes: Long, val labelRes: Int) {
+    IMMEDIATE(0L, R.string.lock_timeout_immediate),
+    ONE_MINUTE(1L, R.string.lock_timeout_1min),
+    FIVE_MINUTES(5L, R.string.lock_timeout_5min),
+    FIFTEEN_MINUTES(15L, R.string.lock_timeout_15min);
 
     val millis: Long get() = minutes * 60_000L
 

@@ -4,6 +4,7 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import asia.axientstudio.quickauth.android.R
 import java.util.concurrent.Executor
 
 /**
@@ -23,7 +24,7 @@ class BiometricAuthManager(private val activity: FragmentActivity) {
 
     fun authenticate(onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (!canAuthenticateWithBiometrics()) {
-            onError("No biometric (fingerprint/face) enrolled on this device. Please enroll one in system settings to use QuickAuth.")
+            onError(activity.getString(R.string.biometric_not_enrolled_error))
             return
         }
 
@@ -37,7 +38,7 @@ class BiometricAuthManager(private val activity: FragmentActivity) {
                     onError(errString.toString())
                 }
                 override fun onAuthenticationFailed() {
-                    onError("Authentication failed")
+                    onError(activity.getString(R.string.biometric_auth_failed))
                 }
             })
 
@@ -47,10 +48,10 @@ class BiometricAuthManager(private val activity: FragmentActivity) {
         // dismisses the prompt (Cancel) — it does not open a device-credential
         // unlock screen.
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock QuickAuth")
-            .setSubtitle("Biometric authentication required")
+            .setTitle(activity.getString(R.string.biometric_prompt_title))
+            .setSubtitle(activity.getString(R.string.biometric_prompt_subtitle))
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-            .setNegativeButtonText("Cancel")
+            .setNegativeButtonText(activity.getString(R.string.biometric_prompt_cancel))
             .setConfirmationRequired(false)
             .build()
 

@@ -12,7 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import asia.axientstudio.quickauth.android.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,10 +38,10 @@ fun ImportScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Import Account") },
+                title = { Text(stringResource(R.string.import_account_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -59,7 +61,7 @@ fun ImportScreen(
             ) {
                 Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Import from Gallery")
+                Text(stringResource(R.string.import_from_gallery))
             }
             Button(
                 onClick = { onScanCamera() },
@@ -67,7 +69,7 @@ fun ImportScreen(
             ) {
                 Icon(Icons.Filled.CameraAlt, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Scan with Camera")
+                Text(stringResource(R.string.scan_with_camera))
             }
         }
     }

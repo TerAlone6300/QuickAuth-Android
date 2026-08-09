@@ -54,7 +54,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("QuickAuth") },
+                title = { Text(stringResource(R.string.app_name_title)) },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings))
@@ -77,12 +77,12 @@ fun MainScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         ExtendedFloatingActionButton(
-                            text = { Text("Keyboard") },
+                            text = { Text(stringResource(R.string.action_keyboard)) },
                             icon = { Icon(Icons.Filled.Keyboard, contentDescription = null) },
                             onClick = { fabExpanded = false; showAddDialog = true }
                         )
                         ExtendedFloatingActionButton(
-                            text = { Text("Camera") },
+                            text = { Text(stringResource(R.string.action_camera)) },
                             icon = { Icon(Icons.Filled.CameraAlt, contentDescription = null) },
                             onClick = { 
                                 fabExpanded = false
@@ -97,7 +97,7 @@ fun MainScreen(
                 ) {
                     Icon(
                         if (fabExpanded) Icons.Filled.Close else Icons.Filled.Add,
-                        contentDescription = "Add"
+                        contentDescription = stringResource(R.string.action_add)
                     )
                 }
             }
@@ -131,19 +131,19 @@ fun AddAccountDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Account") },
+        title = { Text(stringResource(R.string.add_account_title)) },
         text = {
             Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Account Name") })
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.account_name_label)) })
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = secret, onValueChange = { secret = it }, label = { Text("Secret") })
+                OutlinedTextField(value = secret, onValueChange = { secret = it }, label = { Text(stringResource(R.string.secret_label)) })
             }
         },
         confirmButton = {
-            Button(onClick = { onAdd(name, secret) }) { Text("Add") }
+            Button(onClick = { onAdd(name, secret) }) { Text(stringResource(R.string.add)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -155,6 +155,9 @@ fun AccountItem(name: String, secret: String, onDelete: () -> Unit) {
     var progress by remember { mutableStateOf(1f) }
     var showMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val codeCopiedText = stringResource(R.string.code_copied)
+    val editLabel = stringResource(R.string.action_edit)
+    val deleteLabel = stringResource(R.string.action_delete)
 
     LaunchedEffect(secret) {
         while(true) {
@@ -172,16 +175,16 @@ fun AccountItem(name: String, secret: String, onDelete: () -> Unit) {
             .combinedClickable(
                 onClick = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = android.content.ClipData.newPlainText("TOTP Code", code)
+                    val clip = android.content.ClipData.newPlainText(codeCopiedText, code)
                     clipboard.setPrimaryClip(clip)
-                    Toast.makeText(context, "Code copied", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, codeCopiedText, Toast.LENGTH_SHORT).show()
                 },
                 onLongClick = { showMenu = true }
             )
     ) {
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-            DropdownMenuItem(text = { Text("Edit") }, onClick = { /* TODO */ showMenu = false })
-            DropdownMenuItem(text = { Text("Delete") }, onClick = { onDelete(); showMenu = false })
+            DropdownMenuItem(text = { Text(editLabel) }, onClick = { /* TODO */ showMenu = false })
+            DropdownMenuItem(text = { Text(deleteLabel) }, onClick = { onDelete(); showMenu = false })
         }
 
         Row(

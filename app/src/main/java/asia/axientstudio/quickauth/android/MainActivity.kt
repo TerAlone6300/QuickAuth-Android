@@ -4,7 +4,9 @@ import android.content.Context
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,8 +32,29 @@ import kotlinx.coroutines.launch
 private const val PREFS_NAME = "app_prefs"
 private const val KEY_THEME_MODE = "theme_mode"
 private const val KEY_HAS_PROMPTED_SYNC = "has_prompted_sync_setup"
+private const val KEY_LANGUAGE_TAG = "language_tag"
 
-class MainActivity : FragmentActivity() {
+/**
+ * Applies (and persists) the app's per-app language. Uses
+ * AppCompatDelegate.setApplicationLocales(), the AndroidX-recommended API for
+ * runtime language switching — it works down to API 24 via the AppCompat
+ * backport and defers to the platform LocaleManager on Android 13+.
+ * MainActivity must extend AppCompatActivity (not just FragmentActivity) for
+ * this to actually take effect on the Compose UI; a plain FragmentActivity
+ * silently ignores the call.
+ */
+private fun applyLanguage(context: Context, languageTag: String) {
+    val localeList = if (languageTag.isBlank()) {
+        LocaleListCompat.getEmptyLocaleList() // follow system
+    } else {
+        LocaleListCompat.forLanguageTags(languageTag)
+    }
+    AppCompatDelegate.setApplicationLocales(localeList)
+    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit().putString(KEY_LANGUAGE_TAG, languageTag).apply()
+}
+
+class MainActivity : AppCompatActivity() {
 
     // Timestamp (elapsedRealtime-independent wall clock is fine here since we
     // only care about "how long was the app backgrounded") of the last time
@@ -40,7 +63,40 @@ class MainActivity : FragmentActivity() {
     // screens (Settings, Import) never counts as "leaving the app".
     private var backgroundedAtMillis: Long? = null
 
+    // Bumped every time this Activity resumes. Used as a LaunchedEffect key so
+    // the biometric prompt is re-shown on every resume while unauthenticated —
+    // this does NOT depend on isAuthenticated changing value.
+    //
+    // Why this is needed: BiometricPrompt auto-dismisses itself when the
+    // Activity leaves the foreground (this is documented, intentional
+    // platform behavior for security). On some devices/OS versions, that
+    // auto-dismiss does not reliably invoke onAuthenticationError, so if the
+    // user backgrounds the app before completing/cancelling the prompt (e.g.
+    // taps Home a split second after the prompt appears), neither onSuccess
+    // nor onError fires. isAuthenticated is then stuck at false with no event
+    // to react to, and because LaunchedEffect(isAuthenticated) only reruns
+    // when the key's *value* changes, re-opening the app just resumes the
+    // same Activity into a permanently blank screen (isAuthenticated was
+    // already false, so the key doesn't change) — recoverable only by force-
+    // stopping or swiping the app away. resumeTrigger guarantees a fresh
+    // attempt on every single resume regardless of whether isAuthenticated
+    // actually changed.
+    private var resumeTrigger by mutableIntStateOf(0)
+
+    override fun onResume() {
+        super.onResume()
+        resumeTrigger++
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Re-apply the saved language before the Activity/Compose content is
+        // created, so the very first frame is already in the right language.
+        val savedLanguageTag = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_LANGUAGE_TAG, null)
+        if (!savedLanguageTag.isNullOrBlank()) {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(savedLanguageTag))
+        }
+
         super.onCreate(savedInstanceState)
 
         // Screen-capture protection: FLAG_SECURE blocks screenshots and screen
@@ -77,9 +133,12 @@ class MainActivity : FragmentActivity() {
             }
 
             // Single source of truth for triggering the prompt: fires on first
-            // composition, and again any time isAuthenticated flips back to
-            // false (e.g. re-lock after the configured background timeout).
-            LaunchedEffect(isAuthenticated) {
+            // composition, whenever isAuthenticated flips back to false (e.g.
+            // re-lock after the configured background timeout), AND on every
+            // Activity resume (resumeTrigger) — the last one is what recovers
+            // from the stuck-blank-screen case described above, since it does
+            // not depend on isAuthenticated's value actually changing.
+            LaunchedEffect(isAuthenticated, resumeTrigger) {
                 if (!isAuthenticated && biometricEnabled) runBiometricAuth()
             }
 
@@ -192,6 +251,13 @@ class MainActivity : FragmentActivity() {
                                 themeMode = mode
                                 appPrefs.edit().putString(KEY_THEME_MODE, mode).apply()
                             },
+                            currentLanguageTag = appPrefs.getString(KEY_LANGUAGE_TAG, "") ?: "",
+                            onLanguageChange = { tag ->
+                                // Persists the choice and recreates the Activity with
+                                // the new locale applied (AppCompatDelegate handles the
+                                // recreate on API < 33 automatically).
+                                applyLanguage(this@MainActivity, tag)
+                            },
                             syncManager = syncManager,
                             onSyncStateChanged = {
                                 // Accounts may have been updated/merged by a sync pass;
@@ -216,8 +282,8 @@ class MainActivity : FragmentActivity() {
                     } else if (showImport.value) {
                         ImportScreen(
                             onBack = { showImport.value = false },
-                            onImportGallery = { uri -> Toast.makeText(this, "Importing: $uri", Toast.LENGTH_SHORT).show() },
-                            onScanCamera = { Toast.makeText(this, "Camera scan not yet fully implemented", Toast.LENGTH_SHORT).show() }
+                            onImportGallery = { uri -> Toast.makeText(this, getString(R.string.importing_toast, uri), Toast.LENGTH_SHORT).show() },
+                            onScanCamera = { Toast.makeText(this, getString(R.string.camera_scan_not_implemented), Toast.LENGTH_SHORT).show() }
                         )
                     } else {
                         MainScreen(

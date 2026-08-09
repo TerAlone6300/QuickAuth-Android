@@ -4,9 +4,6 @@
     <string name="settings">Settings</string>
     <string name="back">Back</string>
     <string name="theme">Theme</string>
-    <string name="system">System</string>
-    <string name="light">Light</string>
-    <string name="dark">Dark</string>
     <string name="security">Security</string>
     <string name="sync">Sync</string>
     <string name="no_accounts">No accounts yet</string>
@@ -37,4 +34,64 @@
     <string name="sync_completed">Sync completed (%1$d accounts total)</string>
     <string name="sync_session_revoked">Session revoked (%1$s). Please set up sync again.</string>
     <string name="sync_logged_in_as">Logged in as %1$s</string>
+
+    <!-- Theme -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Language -->
+    <string name="language">Language</string>
+    <string name="language_system_default">System default</string>
+    <string name="language_english">English</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
+
+    <!-- Security section -->
+    <string name="security_flag_secure_desc">• Screenshots and screen recording are blocked system-wide while the app is open (FLAG_SECURE).\n• The Recents (app switcher) preview shows a blank screen instead of your accounts.</string>
+    <string name="security_coloros_hint">Your device likely runs ColorOS. For extra protection in the Recents screen, you can also enable ColorOS\'s own \"Hide content\" (App Lock → Hide content) for QuickAuth in system Settings — this is a system feature and must be turned on manually, the app cannot enable it for you.</string>
+    <string name="security_require_biometric">Require fingerprint/face to open</string>
+    <string name="security_no_fallback">No device PIN/pattern/password fallback — biometric only.</string>
+    <string name="security_lock_timing">Lock timing</string>
+    <string name="security_lock_timing_desc">Choose how long the app can stay in the background before it locks again.</string>
+    <string name="lock_timeout_immediate">Immediately on exit</string>
+    <string name="lock_timeout_1min">1 minute after exit</string>
+    <string name="lock_timeout_5min">5 minutes after exit</string>
+    <string name="lock_timeout_15min">15 minutes after exit</string>
+
+    <!-- Sync toggle -->
+    <string name="sync_enable_toggle">Enable Sync</string>
+
+    <!-- Biometric prompt -->
+    <string name="biometric_prompt_title">Unlock QuickAuth</string>
+    <string name="biometric_prompt_subtitle">Biometric authentication required</string>
+    <string name="biometric_prompt_cancel">Cancel</string>
+    <string name="biometric_not_enrolled_error">No biometric (fingerprint/face) enrolled on this device. Please enroll one in system settings to use QuickAuth.</string>
+    <string name="biometric_auth_failed">Authentication failed</string>
+
+    <!-- Main / account list -->
+    <string name="app_name_title">QuickAuth</string>
+    <string name="action_keyboard">Keyboard</string>
+    <string name="action_camera">Camera</string>
+    <string name="action_add">Add</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="add_account_title">Add Account</string>
+    <string name="account_name_label">Account Name</string>
+    <string name="secret_label">Secret</string>
+    <string name="add">Add</string>
+    <string name="cancel">Cancel</string>
+    <string name="code_copied">Code copied</string>
+
+    <!-- Import screen -->
+    <string name="import_account_title">Import Account</string>
+    <string name="import_from_gallery">Import from Gallery</string>
+    <string name="scan_with_camera">Scan with Camera</string>
+    <string name="importing_toast">Importing: %1$s</string>
+    <string name="camera_scan_not_implemented">Camera scan not yet fully implemented</string>
+
+    <!-- Sync first-launch prompt -->
+    <string name="sync_first_launch_title">Enable Code Sync?</string>
+    <string name="sync_first_launch_body">You can sync your accounts across devices using your own self-hosted QuickAuth server. This is optional — you can always set it up later from Settings.</string>
+    <string name="sync_first_launch_yes">Yes (Enable Sync)</string>
+    <string name="sync_first_launch_no">No (Local Only)</string>
 </resources>

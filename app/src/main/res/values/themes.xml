@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.QuickAuth" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Must extend Theme.AppCompat (or a descendant) because MainActivity extends
+         AppCompatActivity, which is required for AppCompatDelegate.setApplicationLocales()
+         to take effect on Compose UI. Compose draws its own UI regardless of this
+         XML theme, so this only governs window/system-bar basics. -->
+    <style name="Theme.QuickAuth" parent="Theme.AppCompat.DayNight.NoActionBar" />
 </resources>
