@@ -44,5 +44,10 @@ data class RefreshResponse(
 data class SessionRequest(val at: String?)
 data class SessionResponse(val success: Boolean, val st: String? = null, val message: String? = null)
 
-data class SyncRequest(val st: String?, val data: Map<String, String>?)
-data class SyncResponse(val success: Boolean, val data: Map<String, String>? = null, val message: String? = null)
+// Values are nullable: a null value in a request deletes that entry on the server (used to purge old
+// unencrypted entries). Gson must be built with serializeNulls() for that to be sent (see SyncManager).
+data class SyncRequest(val st: String?, val data: Map<String, String?>?)
+data class SyncResponse(val success: Boolean, val data: Map<String, String?>? = null, val message: String? = null)
+
+/** Body of the server's error responses (HTTP 4xx/5xx), e.g. {"success": false, "message": "..."}. */
+data class ApiError(val message: String? = null)

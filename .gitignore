@@ -1,0 +1,12 @@
+# Gradle / Android Studio
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+
+# Signing material must never be committed (CI writes app/release.jks at build time)
+*.jks
+*.keystore
+keystore.properties

@@ -272,6 +272,12 @@ fun AccountCard(name: String, secret: String, onDelete: () -> Unit) {
                     onClick     = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip      = android.content.ClipData.newPlainText(codeCopiedText, code)
+                        // Android 13+: mark the code as sensitive so the system clipboard preview doesn't show it.
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                            clip.description.extras = android.os.PersistableBundle().apply {
+                                putBoolean(android.content.ClipDescription.EXTRA_IS_SENSITIVE, true)
+                            }
+                        }
                         clipboard.setPrimaryClip(clip)
                         Toast.makeText(context, codeCopiedText, Toast.LENGTH_SHORT).show()
                     },

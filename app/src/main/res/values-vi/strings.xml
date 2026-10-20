@@ -11,7 +11,8 @@
     <string name="sync_account_title">Tài khoản đồng bộ</string>
     <string name="sync_server_url">URL máy chủ (http/https)</string>
     <string name="sync_url_required">Cần nhập URL</string>
-    <string name="sync_url_scheme_error">URL phải bắt đầu bằng http:// hoặc https://</string>
+    <string name="sync_url_scheme_error">URL phải bắt đầu bằng https://</string>
+    <string name="sync_http_blocked">http:// thuần bị chặn vì an toàn của bạn. Hãy dùng URL máy chủ https://.</string>
     <string name="sync_insecure_warning">⚠️ CẢNH BÁO: BẠN ĐANG DÙNG HTTP KHÔNG BẢO MẬT!\nMật khẩu và mã bí mật TOTP có thể bị đánh cắp.</string>
     <string name="sync_continue_anyway">Vẫn tiếp tục</string>
     <string name="sync_next">Tiếp theo</string>
@@ -94,4 +95,23 @@
     <string name="sync_first_launch_body">Bạn có thể đồng bộ tài khoản giữa các thiết bị bằng máy chủ QuickAuth tự triển khai của riêng bạn. Đây là tính năng tùy chọn — bạn luôn có thể thiết lập sau trong Cài đặt.</string>
     <string name="sync_first_launch_yes">Có (Bật đồng bộ)</string>
     <string name="sync_first_launch_no">Không (Chỉ dùng cục bộ)</string>
+
+    <!-- Mã hóa đầu-cuối dữ liệu đồng bộ -->
+    <string name="e2ee_title">Mã hóa đồng bộ</string>
+    <string name="e2ee_body_create">Mã bí mật được mã hóa ngay trên thiết bị này trước khi tải lên, nên máy chủ không bao giờ đọc được. Hãy chọn một passphrase đồng bộ — KHÔNG phải mật khẩu đăng nhập. Dùng cùng một passphrase trên mọi thiết bị. Nếu quên, dữ liệu đã đồng bộ không thể khôi phục.</string>
+    <string name="e2ee_body_unlock">Nhập passphrase đồng bộ bạn đã chọn trên thiết bị đầu tiên.</string>
+    <string name="e2ee_passphrase">Passphrase đồng bộ</string>
+    <string name="e2ee_confirm">Xác nhận passphrase</string>
+    <string name="e2ee_continue">Tiếp tục</string>
+    <string name="e2ee_checking">Đang kiểm tra máy chủ…</string>
+    <string name="e2ee_deriving">Đang tạo khóa… (vài giây)</string>
+    <string name="e2ee_too_short">Dùng ít nhất 8 ký tự</string>
+    <string name="e2ee_mismatch">Passphrase không khớp!</string>
+    <string name="e2ee_wrong">Sai passphrase của tài khoản này</string>
+    <string name="e2ee_same_as_login">Phải khác mật khẩu đăng nhập của bạn</string>
+    <string name="sync_completed_warning">Đồng bộ hoàn tất (%1$d tài khoản). Có %2$d mục không giải mã được (passphrase khác trên thiết bị khác, hoặc bị can thiệp).</string>
+
+    <!-- Khóa sinh trắc học trên thiết bị không có sinh trắc học -->
+    <string name="biometric_lock_disabled_unavailable">Đã tắt khóa sinh trắc học: thiết bị chưa đăng ký vân tay/khuôn mặt. Bạn có thể bật lại trong Cài đặt sau khi đăng ký.</string>
+    <string name="security_biometric_unavailable">Không thể bật: thiết bị chưa đăng ký vân tay/khuôn mặt. Hãy đăng ký trong cài đặt hệ thống trước.</string>
 </resources>

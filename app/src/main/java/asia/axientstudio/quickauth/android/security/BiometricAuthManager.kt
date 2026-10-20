@@ -1,5 +1,6 @@
 package asia.axientstudio.quickauth.android.security
 
+import android.content.Context
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -16,11 +17,7 @@ import java.util.concurrent.Executor
 class BiometricAuthManager(private val activity: FragmentActivity) {
 
     /** True if the device has at least one strong biometric (fingerprint/face) enrolled. */
-    fun canAuthenticateWithBiometrics(): Boolean {
-        val biometricManager = BiometricManager.from(activity)
-        return biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
-            BiometricManager.BIOMETRIC_SUCCESS
-    }
+    fun canAuthenticateWithBiometrics(): Boolean = isAvailable(activity)
 
     fun authenticate(onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (!canAuthenticateWithBiometrics()) {
@@ -38,7 +35,9 @@ class BiometricAuthManager(private val activity: FragmentActivity) {
                     onError(errString.toString())
                 }
                 override fun onAuthenticationFailed() {
-                    onError(activity.getString(R.string.biometric_auth_failed))
+                    // A fingerprint/face that wasn't recognised. The system prompt stays open so the user can just
+                    // retry, and it reports a lockout through onAuthenticationError after too many attempts, so
+                    // there is nothing to do here (closing the app on a single bad read was a bug).
                 }
             })
 
@@ -56,5 +55,23 @@ class BiometricAuthManager(private val activity: FragmentActivity) {
             .build()
 
         biometricPrompt.authenticate(promptInfo)
+    }
+
+    companion object {
+        /** True if the device has at least one strong biometric (fingerprint/face) enrolled. */
+        fun isAvailable(context: Context): Boolean =
+            BiometricManager.from(context).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+                BiometricManager.BIOMETRIC_SUCCESS
+
+        /**
+         * True when the lock can never be satisfied on this device: no biometric hardware, or nothing enrolled.
+         * Transient states (sensor busy, security update pending, ...) are deliberately not included.
+         */
+        fun isPermanentlyUnavailable(context: Context): Boolean =
+            when (BiometricManager.from(context).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
+                BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+                BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> true
+                else -> false
+            }
     }
 }

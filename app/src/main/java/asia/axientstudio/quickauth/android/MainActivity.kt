@@ -18,9 +18,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import asia.axientstudio.quickauth.android.data.SecureStorage
 import asia.axientstudio.quickauth.android.network.SyncManager
+import asia.axientstudio.quickauth.android.network.SyncResult
 import asia.axientstudio.quickauth.android.security.BiometricAuthManager
 import asia.axientstudio.quickauth.android.security.LockPreferences
 import asia.axientstudio.quickauth.android.security.LockTimeout
+import asia.axientstudio.quickauth.android.ui.E2eePassphraseDialog
 import asia.axientstudio.quickauth.android.ui.ImportScreen
 import asia.axientstudio.quickauth.android.ui.MainScreen
 import asia.axientstudio.quickauth.android.ui.SettingsScreen
@@ -126,6 +128,15 @@ class MainActivity : AppCompatActivity() {
             var isAuthenticated by remember { mutableStateOf(!biometricEnabled) }
 
             fun runBiometricAuth() {
+                if (BiometricAuthManager.isPermanentlyUnavailable(this@MainActivity)) {
+                    // No biometric hardware, or none enrolled (e.g. the fingerprints were removed after the lock was
+                    // turned on): the lock can never be satisfied, so turn it off instead of closing the app.
+                    lockPreferences.biometricEnabled = false
+                    biometricEnabled = false
+                    isAuthenticated = true
+                    Toast.makeText(this@MainActivity, getString(R.string.biometric_lock_disabled_unavailable), Toast.LENGTH_LONG).show()
+                    return
+                }
                 biometricAuthManager.authenticate(
                     onSuccess = { isAuthenticated = true },
                     onError = { finish() }
@@ -194,10 +205,12 @@ class MainActivity : AppCompatActivity() {
                 mutableStateOf(!hasPromptedSync && !syncManager.isSyncEnabled)
             }
             var showSyncSetupFromPrompt by remember { mutableStateOf(false) }
+            // Sync is on but this device has no encryption key yet: nothing is uploaded until the user enters one.
+            var showPassphrase by remember { mutableStateOf(false) }
 
             LaunchedEffect(isAuthenticated) {
                 if (isAuthenticated && hasPromptedSync && syncManager.isSyncEnabled) {
-                    syncManager.performSync()
+                    if (syncManager.performSync() is SyncResult.NeedsPassphrase) showPassphrase = true
                     refreshAccounts()
                 }
             }
@@ -238,7 +251,7 @@ class MainActivity : AppCompatActivity() {
                             onSuccess = {
                                 showSyncSetupFromPrompt = false
                                 scope.launch {
-                                    syncManager.performSync()
+                                    if (syncManager.performSync() is SyncResult.NeedsPassphrase) showPassphrase = true
                                     refreshAccounts()
                                 }
                             }
@@ -259,6 +272,7 @@ class MainActivity : AppCompatActivity() {
                                 applyLanguage(this@MainActivity, tag)
                             },
                             syncManager = syncManager,
+                            onNeedsPassphrase = { showPassphrase = true },
                             onSyncStateChanged = {
                                 // Accounts may have been updated/merged by a sync pass;
                                 // refresh the in-memory map shown on MainScreen.
@@ -266,8 +280,13 @@ class MainActivity : AppCompatActivity() {
                             },
                             biometricEnabled = biometricEnabled,
                             onBiometricEnabledChange = { enabled ->
-                                biometricEnabled = enabled
-                                lockPreferences.biometricEnabled = enabled
+                                if (enabled && BiometricAuthManager.isPermanentlyUnavailable(this)) {
+                                    // Turning the lock on would lock the user out of the app.
+                                    Toast.makeText(this, getString(R.string.security_biometric_unavailable), Toast.LENGTH_LONG).show()
+                                } else {
+                                    biometricEnabled = enabled
+                                    lockPreferences.biometricEnabled = enabled
+                                }
                                 // Turning the lock off unlocks immediately; turning it
                                 // on takes effect from the next backgrounding, current
                                 // session stays unlocked so the user isn't immediately
@@ -297,6 +316,21 @@ class MainActivity : AppCompatActivity() {
                             onAddAccount = { name, secret ->
                                 secureStorage.saveAccount(name, secret)
                                 refreshAccounts()
+                            }
+                        )
+                    }
+
+                    // End-to-end encryption passphrase prompt, shown over whichever screen is open.
+                    if (showPassphrase) {
+                        E2eePassphraseDialog(
+                            syncManager = syncManager,
+                            onDismiss = { showPassphrase = false },
+                            onSuccess = {
+                                showPassphrase = false
+                                scope.launch {
+                                    syncManager.performSync()
+                                    refreshAccounts()
+                                }
                             }
                         )
                     }

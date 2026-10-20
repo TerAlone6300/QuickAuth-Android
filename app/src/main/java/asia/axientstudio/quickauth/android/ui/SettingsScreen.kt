@@ -22,6 +22,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import asia.axientstudio.quickauth.android.R
 import asia.axientstudio.quickauth.android.network.AuthResult
+import asia.axientstudio.quickauth.android.network.E2eeResult
+import asia.axientstudio.quickauth.android.network.E2eeState
 import asia.axientstudio.quickauth.android.network.SyncManager
 import asia.axientstudio.quickauth.android.network.SyncResult
 import asia.axientstudio.quickauth.android.security.LockTimeout
@@ -46,7 +48,8 @@ fun SettingsScreen(
     biometricEnabled: Boolean = true,
     onBiometricEnabledChange: (Boolean) -> Unit = {},
     lockTimeout: LockTimeout = LockTimeout.IMMEDIATE,
-    onLockTimeoutChange: (LockTimeout) -> Unit = {}
+    onLockTimeoutChange: (LockTimeout) -> Unit = {},
+    onNeedsPassphrase: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -62,6 +65,7 @@ fun SettingsScreen(
     val syncConfiguredSuccessText = stringResource(R.string.sync_configured_success)
     val syncSessionRevokedTemplate = stringResource(R.string.sync_session_revoked)
     val syncCompletedTemplate = stringResource(R.string.sync_completed)
+    val syncCompletedWarningTemplate = stringResource(R.string.sync_completed_warning)
 
     fun refreshSyncState() {
         syncEnabled = syncManager.isSyncEnabled
@@ -75,8 +79,12 @@ fun SettingsScreen(
             syncStatus = null
             when (val result = syncManager.performSync()) {
                 is SyncResult.Success -> {
-                    syncStatusIsError = false
-                    syncStatus = syncCompletedTemplate.format(result.accountCount)
+                    syncStatusIsError = result.undecryptable > 0
+                    syncStatus = if (result.undecryptable > 0) {
+                        syncCompletedWarningTemplate.format(result.accountCount, result.undecryptable)
+                    } else {
+                        syncCompletedTemplate.format(result.accountCount)
+                    }
                     onSyncStateChanged()
                 }
                 is SyncResult.SessionInvalidated -> {
@@ -87,6 +95,12 @@ fun SettingsScreen(
                 is SyncResult.Error -> {
                     syncStatusIsError = true
                     syncStatus = result.message
+                }
+                SyncResult.NeedsPassphrase -> {
+                    // Nothing was uploaded: ask for the encryption passphrase (dialog is owned by MainActivity).
+                    syncStatusIsError = false
+                    syncStatus = null
+                    onNeedsPassphrase()
                 }
                 SyncResult.Disabled -> { /* no-op */ }
             }
@@ -393,6 +407,7 @@ fun SyncSetupDialog(
     // functions below can safely reference them.
     val urlRequiredText = stringResource(R.string.sync_url_required)
     val urlSchemeErrorText = stringResource(R.string.sync_url_scheme_error)
+    val httpBlockedText = stringResource(R.string.sync_http_blocked)
     val checkUsernameFirstText = stringResource(R.string.sync_check_username_first)
     val passwordRequiredText = stringResource(R.string.sync_password_required)
     val passwordsMismatchText = stringResource(R.string.sync_passwords_mismatch)
@@ -403,13 +418,14 @@ fun SyncSetupDialog(
             urlError = urlRequiredText
             return
         }
-        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-            urlError = urlSchemeErrorText
+        if (trimmed.startsWith("http://")) {
+            // Clear-text HTTP is disabled for this app (usesCleartextTraffic=false), so "Continue anyway" could never
+            // connect; say so up front instead of failing later with a cryptic network error.
+            urlError = httpBlockedText
             return
         }
-        if (trimmed.startsWith("http://") && !insecureWarning) {
-            // Surface the warning once; user must tap "Continue anyway".
-            insecureWarning = true
+        if (!trimmed.startsWith("https://")) {
+            urlError = urlSchemeErrorText
             return
         }
         urlError = null
@@ -571,6 +587,143 @@ fun SyncSetupDialog(
                 }
             }, enabled = !submitting) {
                 Text(if (step == SyncSetupStep.CREDENTIALS) stringResource(R.string.sync_back) else stringResource(R.string.sync_cancel))
+            }
+        }
+    )
+}
+
+/**
+ * End-to-end encryption passphrase prompt. Shown when sync is enabled but this device has no key yet
+ * ([SyncResult.NeedsPassphrase]): the first device chooses a passphrase, every other device enters the same one.
+ * The passphrase is only used to derive a key on this device; it is never stored or sent.
+ */
+@Composable
+fun E2eePassphraseDialog(
+    syncManager: SyncManager,
+    onDismiss: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    var state by remember { mutableStateOf<E2eeState?>(null) }
+    var pass by remember { mutableStateOf("") }
+    var passConfirm by remember { mutableStateOf("") }
+    var passVisible by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val tooShortText = stringResource(R.string.e2ee_too_short)
+    val mismatchText = stringResource(R.string.e2ee_mismatch)
+    val wrongText = stringResource(R.string.e2ee_wrong)
+    val sameAsLoginText = stringResource(R.string.e2ee_same_as_login)
+
+    LaunchedEffect(Unit) {
+        val s = syncManager.e2eeState()
+        if (s is E2eeState.Error) errorMessage = s.message
+        state = s
+    }
+    val creating = state is E2eeState.Create
+    val ready = state is E2eeState.Create || state is E2eeState.Unlock
+
+    fun submit() {
+        if (!ready || busy || pass.isEmpty()) return
+        if (creating) {
+            if (pass.length < 8) {
+                errorMessage = tooShortText
+                return
+            }
+            if (pass != passConfirm) {
+                errorMessage = mismatchText
+                return
+            }
+        }
+        scope.launch {
+            busy = true
+            errorMessage = null
+            when (val res = syncManager.setupE2ee(pass)) {
+                is E2eeResult.Success -> onSuccess()
+                is E2eeResult.WrongPassphrase -> errorMessage = wrongText
+                is E2eeResult.SameAsLoginPassword -> errorMessage = sameAsLoginText
+                is E2eeResult.Error -> errorMessage = res.message
+            }
+            busy = false
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (!busy) onDismiss() },
+        title = { Text(stringResource(R.string.e2ee_title)) },
+        text = {
+            Column {
+                if (state == null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.e2ee_checking), style = MaterialTheme.typography.bodySmall)
+                    }
+                } else if (ready) {
+                    Text(
+                        stringResource(if (creating) R.string.e2ee_body_create else R.string.e2ee_body_unlock),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+
+                    val visualTransform = if (passVisible) VisualTransformation.None else PasswordVisualTransformation()
+                    OutlinedTextField(
+                        value = pass,
+                        onValueChange = { pass = it; errorMessage = null },
+                        label = { Text(stringResource(R.string.e2ee_passphrase)) },
+                        singleLine = true,
+                        enabled = !busy,
+                        visualTransformation = visualTransform,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        trailingIcon = {
+                            IconButton(onClick = { passVisible = !passVisible }) {
+                                Icon(
+                                    if (passVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (creating) {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = passConfirm,
+                            onValueChange = { passConfirm = it; errorMessage = null },
+                            label = { Text(stringResource(R.string.e2ee_confirm)) },
+                            singleLine = true,
+                            enabled = !busy,
+                            visualTransformation = visualTransform,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    if (busy) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.e2ee_deriving), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+
+                errorMessage?.let {
+                    Spacer(Modifier.height(8.dp))
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { submit() }, enabled = ready && !busy && pass.isNotEmpty()) {
+                Text(stringResource(R.string.e2ee_continue))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !busy) {
+                Text(stringResource(R.string.sync_cancel))
             }
         }
     )

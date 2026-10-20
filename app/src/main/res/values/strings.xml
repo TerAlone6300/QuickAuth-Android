@@ -11,7 +11,8 @@
     <string name="sync_account_title">Sync Account</string>
     <string name="sync_server_url">Server URL (http/https)</string>
     <string name="sync_url_required">URL is required</string>
-    <string name="sync_url_scheme_error">URL must start with http:// or https://</string>
+    <string name="sync_url_scheme_error">URL must start with https://</string>
+    <string name="sync_http_blocked">Plain http:// is blocked for your security. Use an https:// server URL.</string>
     <string name="sync_insecure_warning">⚠️ WARNING: YOU ARE USING INSECURE HTTP!\nPasswords and TOTP secrets can be intercepted.</string>
     <string name="sync_continue_anyway">Continue anyway</string>
     <string name="sync_next">Next</string>
@@ -94,4 +95,23 @@
     <string name="sync_first_launch_body">You can sync your accounts across devices using your own self-hosted QuickAuth server. This is optional — you can always set it up later from Settings.</string>
     <string name="sync_first_launch_yes">Yes (Enable Sync)</string>
     <string name="sync_first_launch_no">No (Local Only)</string>
+
+    <!-- End-to-end encryption of synced data -->
+    <string name="e2ee_title">Sync encryption</string>
+    <string name="e2ee_body_create">Your secrets are encrypted on this device before they are uploaded, so the server can never read them. Choose a sync passphrase — NOT your login password. Use the same passphrase on every device. If you forget it, your synced data cannot be recovered.</string>
+    <string name="e2ee_body_unlock">Enter the sync passphrase you chose on your first device.</string>
+    <string name="e2ee_passphrase">Sync passphrase</string>
+    <string name="e2ee_confirm">Confirm passphrase</string>
+    <string name="e2ee_continue">Continue</string>
+    <string name="e2ee_checking">Checking server…</string>
+    <string name="e2ee_deriving">Deriving key… (a few seconds)</string>
+    <string name="e2ee_too_short">Use at least 8 characters</string>
+    <string name="e2ee_mismatch">Passphrases do not match!</string>
+    <string name="e2ee_wrong">Wrong passphrase for this account</string>
+    <string name="e2ee_same_as_login">It must be different from your login password</string>
+    <string name="sync_completed_warning">Sync completed (%1$d accounts total). %2$d entries could not be decrypted (different passphrase on another device, or tampering).</string>
+
+    <!-- Biometric lock on devices without biometrics -->
+    <string name="biometric_lock_disabled_unavailable">Biometric lock turned off: no fingerprint/face is enrolled on this device. You can turn it back on in Settings after enrolling one.</string>
+    <string name="security_biometric_unavailable">Can\'t turn this on: no fingerprint/face is enrolled on this device. Enroll one in system settings first.</string>
 </resources>

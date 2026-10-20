@@ -11,8 +11,8 @@ android {
         applicationId "asia.axientstudio.quickauth.android"
         minSdk 24
         targetSdk 34
-        versionCode 3
-        versionName "1.1.0"
+        versionCode 4
+        versionName "1.2.0"
     }
 
     def releaseKeystore = file("release.jks")
@@ -35,7 +35,11 @@ android {
     buildTypes {
         release {
             // Falls back to debug signing when no release keystore/env vars are configured,
-            // so `assembleRelease` doesn't hard-fail on a fresh checkout.
+            // so `assembleRelease` doesn't hard-fail on a fresh checkout. CI sets REQUIRE_RELEASE_SIGNING for
+            // real (push) builds: there a missing key is an error, never a debug-signed "release".
+            if (!hasReleaseSigning && System.getenv("REQUIRE_RELEASE_SIGNING") == "true") {
+                throw new GradleException("Release signing is not configured (release.jks / STORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD).")
+            }
             signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -73,7 +77,8 @@ dependencies {
     implementation 'androidx.biometric:biometric:1.2.0-alpha05'
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
     implementation 'com.google.android.gms:play-services-code-scanner:16.1.0'
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
     debugImplementation 'androidx.compose.ui:ui-tooling'
+    testImplementation 'junit:junit:4.13.2'
 }

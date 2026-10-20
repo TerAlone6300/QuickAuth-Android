@@ -27,6 +27,8 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assembleRelease --no-daemon
       env:
+        # Pushes must produce a properly signed APK; pull requests (no secrets available) may fall back to debug signing.
+        REQUIRE_RELEASE_SIGNING: ${{ github.event_name == 'push' }}
         STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -34,5 +36,5 @@ jobs:
     - name: Upload Signed APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
+        name: ${{ github.event_name == 'push' && 'app-release' || 'app-debug-signed-NOT-FOR-RELEASE' }}
         path: app/build/outputs/apk/release/app-release.apk
